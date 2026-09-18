@@ -6,7 +6,7 @@ def deportes_routes():
     conn = conexion()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM deportes")
+    cursor.execute("SELECT * FROM deportes;")
     consulta = cursor.fetchall()
 
     cursor.close()
