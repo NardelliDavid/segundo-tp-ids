@@ -3,6 +3,7 @@ from src.routes.deportes import *
 from src.routes.canchas import *
 from src.routes.socios import *
 from src.routes.reservas import *
+from src.services.parametros import *
 
 app = Flask(__name__)
 
@@ -42,7 +43,16 @@ def canchas_id(id):
 # ENDPOINTS DE SOCIOS
 @app.route("/socios/", methods=["GET"])
 def socios():
-    return socios_routes()
+    try:
+        limit = int(request.args.get("_limit", 10))
+        offset = int(request.args.get("_offset", 0))
+        mensaje, codigo = verificar_limit_offset(limit, offset)
+        if codigo == 200:
+            return socios_routes()
+        else:
+            return jsonify(mensaje, codigo)
+    except:
+        return jsonify({"Error":"Parametros limit y offset deben ser enteros"}, 400)
 
 @app.route("/socios/<int:id>", methods=["GET"])
 def socios_id(id):
