@@ -12,7 +12,7 @@ def canchas_routes():
     cursor.close()
     conn.close()
 
-    return jsonify(consulta)
+    return jsonify(consulta), 200
 
 # endpoint GET/canchas/<id>
 def canchas_id_routes(id):
@@ -25,4 +25,4 @@ def canchas_id_routes(id):
     cursor.close()
     conn.close()
 
-    return jsonify(consulta)
+    return jsonify(consulta), 200

@@ -12,4 +12,4 @@ def deportes_routes():
     cursor.close()
     conn.close()
 
-    return jsonify(consulta)
+    return jsonify(consulta), 200

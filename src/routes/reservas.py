@@ -12,7 +12,7 @@ def reservas_routes():
     cursor.close()
     conn.close()
 
-    return jsonify(consulta)
+    return jsonify(consulta), 200
 
 # endpoint GET/reservas/<id>
 def reservas_id_routes(id):
@@ -25,4 +25,4 @@ def reservas_id_routes(id):
     cursor.close()
     conn.close()
 
-    return jsonify(consulta)
+    return jsonify(consulta), 200
