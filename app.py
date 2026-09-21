@@ -55,6 +55,10 @@ def socios():
 
     return socios_routes(limit, offset)
 
+@app.route("/socios/", methods=["POST"])
+def crear_socio():
+    return crear_socio_route()
+
 @app.route("/socios/<int:id>", methods=["GET"])
 def socios_id(id):
     return socios_id_routes(id)
