@@ -46,13 +46,14 @@ def socios():
     try:
         limit = int(request.args.get("_limit", 10))
         offset = int(request.args.get("_offset", 0))
-        mensaje, codigo = verificar_limit_offset(limit, offset)
-        if codigo == 200:
-            return socios_routes()
-        else:
-            return jsonify(mensaje, codigo)
     except:
         return jsonify({"Error":"Parametros limit y offset deben ser enteros"}, 400)
+
+    mensaje, codigo = verificar_limit_offset(limit, offset)
+    if codigo != 200:
+        return jsonify(mensaje), codigo
+
+    return socios_routes(limit, offset)
 
 @app.route("/socios/<int:id>", methods=["GET"])
 def socios_id(id):
