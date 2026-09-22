@@ -71,3 +71,11 @@ def reservas():
 @app.route("/reservas/<int:id>", methods=["GET"])
 def reservas_id(id):
     return reservas_id_routes(id)
+
+@app.route("/socios/<int:id>", methods=["PATCH"])
+def modificar_socio(id):
+    return modificar_socio_route(id)
+
+@app.route("/socios/<int:id>", methods=["DELETE"])
+def de_baja_socio(id):
+    return baja_socio_route(id)

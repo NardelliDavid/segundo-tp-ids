@@ -102,3 +102,100 @@ def crear_socio_route():
 
     except Exception as e:
         return jsonify({"Error": f"No se pudo guardar el socio: {str(e)}"}), 500
+
+#endpoint PATCH /socios/<id>
+def modificar_socio_route(id):
+    #Validamos que el ID de la URL sea un número entero
+    try:
+        id_socio = int(id)
+    except ValueError:
+        return jsonify({"Error": "El ID provisto debe ser un número entero"}), 400
+
+    #Atrapamos los datos nuevos que el usuario mandó en el JSON de Postman
+    datos = request.get_json()
+    if not datos:
+        return jsonify({"Error": "No se enviaron datos para modificar"}), 400
+
+    #Abrimos la conexión a tu base de datos de XAMPP
+    try:
+        conn = conexion()
+        cursor = conn.cursor(dictionary=True) #Uso dictionary=True para poder leer los datos comodamente
+
+        #Verifico si el socio realmente existe en la base de datos antes de intentar cambiarlo
+        cursor.execute("SELECT * FROM socios WHERE id = %s;", (id_socio,))
+        socio_actual = cursor.fetchone()
+        
+        if not socio_actual:
+            cursor.close()
+            conn.close()
+            return jsonify({"Error": f"No se encontró ningún socio con el ID {id_socio}"}), 404
+
+       
+        #Si mandó el nombre, usamos el nuevo; si no lo mandó, dejamos el que ya tenía en la base de datos
+        nombre_final = datos.get("nombre", socio_actual["nombre"])
+        
+        #Si mandó el email, aplicamos el requisito del TP: .strip() y .lower() para guardarlo en minúsculas
+        if "email" in datos:
+            email_final = datos["email"].strip().lower()
+        else:
+            email_final = socio_actual["email"]
+
+        #Ejecutamos la orden de actualización (UPDATE) en MySQL
+        query = "UPDATE socios SET nombre = %s, email = %s WHERE id = %s;"
+        cursor.execute(query, (nombre_final, email_final, id_socio))
+        
+        conn.commit() #Confirmamos el cambio real en el disco de XAMPP
+        
+        cursor.close()
+        conn.close()
+        
+        #Devolvemos un mensaje de éxito con los datos como quedaron finalmente
+        return jsonify({
+            "Mensaje": "Socio modificado con éxito",
+            "Socio": {
+                "id": id_socio,
+                "nombre": nombre_final,
+                "email": email_final,
+                "activo": socio_actual["activo"]
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"Error": f"No se pudo modificar el socio: {str(e)}"}), 500
+
+    # endpoint DELETE /socios/<id> (Baja Lógica)
+def baja_socio_route(id):
+    #Valido que el ID de la URL sea un número entero
+    try:
+        id_socio = int(id)
+    except ValueError:
+        return jsonify({"Error": "El ID provisto debe ser un número entero"}), 400
+
+    #Abrimos la conexión a tu base de datos de XAMPP
+    try:
+        conn = conexion()
+        cursor = conn.cursor(dictionary=True)
+        
+        #Verificos si el socio realmente existe en la base de datos antes de desactivarlo
+        cursor.execute("SELECT id FROM socios WHERE id = %s;", (id_socio,))
+        existe = cursor.fetchone()
+        
+        if not existe:
+            cursor.close()
+            conn.close()
+            return jsonify({"Error": f"No se encontró ningún socio con el ID {id_socio}"}), 404
+            
+        #Ejecutamos la BAJA LÓGICA: cambiamos activo a 0
+        query = "UPDATE socios SET activo = 0 WHERE id = %s;"
+        cursor.execute(query, (id_socio,))
+        
+        conn.commit() #Confirmamos el cambio real en el disco de XAMPP
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"Mensaje": f"Socio con ID {id_socio} dado de baja correctamente"}), 200
+
+    except Exception as e:
+        return jsonify({"Error": f"Error al procesar la baja: {str(e)}"}), 500
+
