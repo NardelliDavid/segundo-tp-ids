@@ -40,6 +40,11 @@ def canchas():
 def canchas_id(id):
     return canchas_id_routes(id)
 
+@app.route("/canchas/", methods=["POST"])
+def crear_cancha():
+    return crear_cancha_route()
+
+
 # ENDPOINTS DE SOCIOS
 @app.route("/socios/", methods=["GET"])
 def socios():
