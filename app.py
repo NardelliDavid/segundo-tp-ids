@@ -13,14 +13,30 @@ def index():
         <div>
         <h3>
         DEPORTES: <br>
-        /deportes/ <br>
+        GET/deportes/ <br>
         CANCHAS: <br>
-        /canchas/ <br>
-        /canchas/id <br>
+        GET/canchas/ <br>
+        GET/canchas/id <br>
+        GET/canchas/disponibles <br>
+        POST/canchas/ <br>
+        PATCH/canchas/id <br>
+        DELETE/canchas/id <br>
         SOCIOS: <br>
-        /socios/ <br>
+        GET/socios/ <br>
+        GET/socios/id <br>
+        POST/socios/ <br>
+        PATCH/socios/ <br>
         RESERVAS: <br>
-        /reservas/ <br>
+        GET/reservas/ <br>
+        POST/reservas <br>
+        GET/reservas/id <br>
+        PUT/reservas/id/estado <br>
+        POST/reservas/recurrentes <br>
+        BLOQUEOS: <br>
+        POST/bloqueos <br>
+        GET/bloqueos <br>
+        DELETE/bloqueos/id <br>
+        
         </h3>
         </div>
         """
