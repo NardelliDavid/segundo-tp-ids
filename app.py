@@ -64,9 +64,21 @@ def socios_id(id):
     return socios_id_routes(id)
 
 # ENDPOINTS DE RESERVAS
-@app.route("/reservas/", methods=["GET"])
+@app.route("/reservas", methods=["GET"])
 def reservas():
     return reservas_routes()
+
+@app.route("/reservas", methods=["POST"])
+def crear_reserva():
+    try:
+        return crear_reserva_route()
+    except Exception:
+        return respuesta_error(
+            "ERROR_INTERNO",
+            "Error interno",
+            "Ocurrió un error interno al procesar la reserva",
+            500
+        ) 
 
 @app.route("/reservas/<int:id>", methods=["GET"])
 def reservas_id(id):
