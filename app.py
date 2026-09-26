@@ -117,6 +117,18 @@ def reservas():
         return jsonify({"Error":"limit u offset estan mal"}), 400
     return reservas_routes(id_cancha,id_socio,estado,fecha_desde,fecha_hasta,limit,offset)
 
+@app.route("/reservas", methods=["POST"])
+def crear_reserva():
+    try:
+        return crear_reserva_route()
+    except Exception:
+        return respuesta_error(
+            "ERROR_INTERNO",
+            "Error interno",
+            "Ocurrió un error interno al procesar la reserva",
+            500
+        )
+
 @app.route("/reservas/<int:id>", methods=["GET"])
 def reservas_id(id):
     return reservas_id_routes(id)
