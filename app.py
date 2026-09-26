@@ -3,6 +3,7 @@ from src.routes.deportes import *
 from src.routes.canchas import *
 from src.routes.socios import *
 from src.routes.reservas import *
+from src.routes.bloqueos import *
 from src.services.parametros import *
 
 app = Flask(__name__)
@@ -160,3 +161,8 @@ def eliminar_bloqueo(id):
 @app.route("/reservas/recurrentes", methods=["POST"])
 def crear_reservas_recurrentes():
     return reservas_recurrentes_route()
+
+# ENDPOINTS DE BLOQUEOS
+@app.route("/bloqueos", methods=["GET"])
+def bloqueos():
+    return bloqueos_routes()   
