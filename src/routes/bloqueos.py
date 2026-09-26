@@ -78,8 +78,19 @@ def bloqueos_routes():
         bloqueo["hora_fin"] = str(bloqueo["hora_fin"])
         bloqueo["fecha"] = bloqueo["fecha"].isoformat()
 
-    # Cantidad total de bloqueos para calcular la paginación
-    cursor.execute("SELECT COUNT(*) AS total FROM bloqueos")
+    # Contamos los bloqueos aplicando los mismos filtros
+    query_total = "SELECT COUNT(*) AS total FROM bloqueos WHERE 1=1"
+    parametros_total = []
+
+    if id_cancha is not None:
+        query_total += " AND id_cancha = %s"
+        parametros_total.append(id_cancha)
+
+    if fecha is not None:
+        query_total += " AND fecha = %s"
+        parametros_total.append(fecha)
+
+    cursor.execute(query_total, parametros_total)
     total = cursor.fetchone()["total"]
 
     cursor.close()
@@ -87,7 +98,6 @@ def bloqueos_routes():
 
     # Cálculo de los offsets de las páginas
     ultimo_offset = ((total - 1) // limit) * limit
-
     anterior_offset = max(offset - limit, 0)
     siguiente_offset = offset + limit
 
