@@ -4,6 +4,7 @@ from src.routes.canchas import *
 from src.routes.socios import *
 from src.routes.reservas import *
 from src.services.parametros import *
+from src.routes.bloqueos import *
 
 app = Flask(__name__)
 
@@ -110,3 +111,9 @@ def modificar_socio(id):
 @app.route("/socios/<int:id>", methods=["DELETE"])
 def de_baja_socio(id):
     return baja_socio_route(id)
+
+# ENDPOINTS DE BLOQUEOS
+@app.route("/bloqueos", methods=["GET"])
+def bloqueos():
+    return bloqueos_routes()
+

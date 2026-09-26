@@ -35,6 +35,16 @@ CREATE TABLE IF NOT EXISTS reservas (
     FOREIGN KEY (id_cancha) REFERENCES canchas(id)
 );
 
+CREATE TABLE IF NOT EXISTS bloqueos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_cancha INT NOT NULL,
+    fecha DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    motivo VARCHAR(255) NOT NULL,
+    FOREIGN KEY (id_cancha) REFERENCES canchas(id)
+);
+
 -- =========================================
 -- DEPORTES (5)
 -- =========================================
