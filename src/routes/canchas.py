@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, request
 from ..repositories.database import conexion
 
 # endpoint GET/canchas
@@ -26,3 +26,46 @@ def canchas_id_routes(id):
     conn.close()
 
     return jsonify(consulta), 200
+
+# endpoint POST /canchas/
+def crear_cancha_route():
+    datos = request.get_json()
+    
+    
+    if not datos or "nombre" not in datos or "precio_hora" not in datos or "id_deporte" not in datos:
+        return jsonify({"Error": "Faltan datos obligatorios (nombre, precio_hora, id_deporte)"}), 400
+        
+    nombre = datos["nombre"]
+    precio_hora = datos["precio_hora"]
+    id_deporte = datos["id_deporte"]
+    # Si nos mandan si es techada (1 o 0) lo usamos; si no, por defecto ponemos 0 (No techada)
+    techada = datos.get("techada", 0) 
+
+    try:
+        conn = conexion()
+        cursor = conn.cursor()
+        
+        query = "INSERT INTO canchas (nombre, id_deporte, precio_hora, techada, activa) VALUES (%s, %s, %s, %s, 1);"
+        cursor.execute(query, (nombre, id_deporte, precio_hora, techada))
+        
+        conn.commit()
+        nuevo_id = cursor.lastrowid
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            "Mensaje": "Cancha creada con éxito",
+            "Cancha": {
+                "id": nuevo_id,
+                "nombre": nombre,
+                "precio_hora": precio_hora,
+                "id_deporte": id_deporte,
+                "techada": techada,
+                "activa": 1
+            }
+        }), 201
+
+    except Exception as e:
+        return jsonify({"Error": f"No se pudo guardar la cancha: {str(e)}"}), 500
+

@@ -13,14 +13,29 @@ def index():
         <div>
         <h3>
         DEPORTES: <br>
-        /deportes/ <br>
+        GET/deportes/ <br>
         CANCHAS: <br>
-        /canchas/ <br>
-        /canchas/id <br>
+        GET/canchas/ <br>
+        GET/canchas/id <br>
+        GET/canchas/disponibles <br>
+        POST/canchas/ <br>
+        PATCH/canchas/id <br>
+        DELETE/canchas/id <br>
         SOCIOS: <br>
-        /socios/ <br>
+        GET/socios/ <br>
+        GET/socios/id <br>
+        POST/socios/ <br>
+        PATCH/socios/ <br>
         RESERVAS: <br>
-        /reservas/ <br>
+        GET/reservas/ <br>
+        POST/reservas <br>
+        GET/reservas/id <br>
+        PUT/reservas/id/estado <br>
+        POST/reservas/recurrentes <br>
+        BLOQUEOS: <br>
+        POST/bloqueos <br>
+        GET/bloqueos <br>
+        DELETE/bloqueos/id <br>
         </h3>
         </div>
         """
@@ -39,6 +54,10 @@ def canchas():
 @app.route("/canchas/<int:id>", methods=["GET"])
 def canchas_id(id):
     return canchas_id_routes(id)
+
+@app.route("/canchas/", methods=["POST"])
+def crear_cancha():
+    return crear_cancha_route()
 
 # ENDPOINTS DE SOCIOS
 @app.route("/socios/", methods=["GET"])
