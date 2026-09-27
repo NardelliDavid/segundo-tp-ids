@@ -12,3 +12,13 @@ def validar_nombre_activo(nombre, activo):
         return nombre, activo
     except:
         return {"Error":"El parametro nombre o activo es erroneo"}, 400
+
+import re
+
+def _email_valido(email):
+    patron = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    return bool(re.match(patron, email))
+
+def _nombre_valido(nombre):
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ' ]+$"
+    return bool(re.match(patron, nombre))
