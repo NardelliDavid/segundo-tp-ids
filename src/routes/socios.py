@@ -103,98 +103,130 @@ def crear_socio_route():
     except Exception as e:
         return jsonify({"Error": f"No se pudo guardar el socio: {str(e)}"}), 500
 
-#endpoint PATCH /socios/<id>
+# endpoint PATCH /socios/<id>
 def modificar_socio_route(id):
-    #Validamos que el ID de la URL sea un número entero
-    try:
-        id_socio = int(id)
-    except ValueError:
-        return jsonify({"Error": "El ID provisto debe ser un número entero"}), 400
+    datos = request.get_json(silent=True)
 
-    #Atrapamos los datos nuevos que el usuario mandó en el JSON de Postman
-    datos = request.get_json()
-    if not datos:
-        return jsonify({"Error": "No se enviaron datos para modificar"}), 400
+    # El cuerpo no puede estar vacío
+    if datos is None or datos == {}:
+        return jsonify(
+            _error("El cuerpo no puede estar vacío")
+        ), 400
 
-    #Abrimos la conexión a tu base de datos de XAMPP
-    try:
-        conn = conexion()
-        cursor = conn.cursor(dictionary=True) #Uso dictionary=True para poder leer los datos comodamente
+    # Campos que se pueden modificar
+    campos_permitidos = {"nombre", "email", "activo"}
 
-        #Verifico si el socio realmente existe en la base de datos antes de intentar cambiarlo
-        cursor.execute("SELECT * FROM socios WHERE id = %s;", (id_socio,))
-        socio_actual = cursor.fetchone()
-        
-        if not socio_actual:
-            cursor.close()
-            conn.close()
-            return jsonify({"Error": f"No se encontró ningún socio con el ID {id_socio}"}), 404
+    # Verificar que no lleguen campos desconocidos
+    if any(campo not in campos_permitidos for campo in datos):
+        return jsonify(
+            _error("Hay campos desconocidos")
+        ), 400
 
-       
-        #Si mandó el nombre, usamos el nuevo; si no lo mandó, dejamos el que ya tenía en la base de datos
-        nombre_final = datos.get("nombre", socio_actual["nombre"])
-        
-        #Si mandó el email, aplicamos el requisito del TP: .strip() y .lower() para guardarlo en minúsculas
-        if "email" in datos:
-            email_final = datos["email"].strip().lower()
-        else:
-            email_final = socio_actual["email"]
+    conn = conexion()
+    cursor = conn.cursor(dictionary=True)
 
-        #Ejecutamos la orden de actualización (UPDATE) en MySQL
-        query = "UPDATE socios SET nombre = %s, email = %s WHERE id = %s;"
-        cursor.execute(query, (nombre_final, email_final, id_socio))
-        
-        conn.commit() #Confirmamos el cambio real en el disco de XAMPP
-        
+    # Verificar que el socio exista
+    cursor.execute(
+        "SELECT * FROM socios WHERE id = %s;",
+        (id,)
+    )
+    socio = cursor.fetchone()
+
+    if not socio:
         cursor.close()
         conn.close()
-        
-        #Devolvemos un mensaje de éxito con los datos como quedaron finalmente
-        return jsonify({
-            "Mensaje": "Socio modificado con éxito",
-            "Socio": {
-                "id": id_socio,
-                "nombre": nombre_final,
-                "email": email_final,
-                "activo": socio_actual["activo"]
-            }
-        }), 200
 
-    except Exception as e:
-        return jsonify({"Error": f"No se pudo modificar el socio: {str(e)}"}), 500
+        return jsonify(
+            _error(
+                "Socio no encontrado",
+                code="SOCIO_NO_ENCONTRADO"
+            )
+        ), 404
 
-    # endpoint DELETE /socios/<id> (Baja Lógica)
-def baja_socio_route(id):
-    #Valido que el ID de la URL sea un número entero
-    try:
-        id_socio = int(id)
-    except ValueError:
-        return jsonify({"Error": "El ID provisto debe ser un número entero"}), 400
+    # Mantener el nombre actual si no se envió uno nuevo
+    nombre_final = socio["nombre"]
 
-    #Abrimos la conexión a tu base de datos de XAMPP
-    try:
-        conn = conexion()
-        cursor = conn.cursor(dictionary=True)
-        
-        #Verificos si el socio realmente existe en la base de datos antes de desactivarlo
-        cursor.execute("SELECT id FROM socios WHERE id = %s;", (id_socio,))
-        existe = cursor.fetchone()
-        
-        if not existe:
+    if "nombre" in datos:
+        if not _nombre_valido(datos["nombre"]):
             cursor.close()
             conn.close()
-            return jsonify({"Error": f"No se encontró ningún socio con el ID {id_socio}"}), 404
-            
-        #Ejecutamos la BAJA LÓGICA: cambiamos activo a 0
-        query = "UPDATE socios SET activo = 0 WHERE id = %s;"
-        cursor.execute(query, (id_socio,))
-        
-        conn.commit() #Confirmamos el cambio real en el disco de XAMPP
-        
-        cursor.close()
-        conn.close()
-        
-        return jsonify({"Mensaje": f"Socio con ID {id_socio} dado de baja correctamente"}), 200
 
-    except Exception as e:
-        return jsonify({"Error": f"Error al procesar la baja: {str(e)}"}), 500
+            return jsonify(
+                _error("El nombre no puede estar vacío")
+            ), 400
+
+        nombre_final = datos["nombre"].strip()
+
+    # Mantener el email actual si no se envió uno nuevo
+    email_final = socio["email"]
+
+    if "email" in datos:
+        email = (
+            datos["email"].strip().lower()
+            if isinstance(datos["email"], str)
+            else ""
+        )
+
+        if not _email_valido(email):
+            cursor.close()
+            conn.close()
+
+            return jsonify(
+                _error("El formato del email es inválido")
+            ), 400
+
+        # Verificar que el email no pertenezca a otro socio
+        if email != socio["email"]:
+            cursor.execute(
+                "SELECT id FROM socios "
+                "WHERE email = %s AND id != %s;",
+                (email, id)
+            )
+
+            if cursor.fetchone():
+                cursor.close()
+                conn.close()
+
+                return jsonify(
+                    _error(
+                        "El email ya está registrado",
+                        code="EMAIL_DUPLICADO"
+                    )
+                ), 409
+
+        email_final = email
+
+    # Mantener activo actual si no se envió uno nuevo
+    activo_final = socio["activo"]
+
+    if "activo" in datos:
+        if not isinstance(datos["activo"], bool):
+            cursor.close()
+            conn.close()
+
+            return jsonify(
+                _error("Activo debe ser true o false")
+            ), 400
+
+        activo_final = datos["activo"]
+
+    # Actualizar los datos
+    cursor.execute(
+        "UPDATE socios "
+        "SET nombre = %s, email = %s, activo = %s "
+        "WHERE id = %s;",
+        (
+            nombre_final,
+            email_final,
+            activo_final,
+            id
+        )
+    )
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    # PATCH exitoso: no devuelve contenido
+    return "", 204
