@@ -109,4 +109,8 @@ def de_baja_cancha(id):
 def bloquear_cancha():
     return bloquear_cancha_route()
 
+@app.route("/bloqueos/<int:id>", methods=["DELETE"])
+def eliminar_bloqueo(id):
+    return eliminar_bloqueo_route(id)
+
 
