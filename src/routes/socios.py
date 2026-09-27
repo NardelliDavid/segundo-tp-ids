@@ -103,38 +103,6 @@ def crear_socio_route():
     except Exception as e:
         return jsonify({"Error": f"No se pudo guardar el socio: {str(e)}"}), 500
 
-# endpoint PATCH /socios/<id>
-def modificar_socio_route(id):
-    datos = request.get_json(silent=True)
-
-    # El cuerpo no puede estar vacío
-    if datos is None or datos == {}:
-        return jsonify(
-            _error("El cuerpo no puede estar vacío")
-        ), 400
-
-    # Campos que se pueden modificar
-    campos_permitidos = {"nombre", "email", "activo"}
-
-    # Verificar que no lleguen campos desconocidos
-    if any(campo not in campos_permitidos for campo in datos):
-        return jsonify(
-            _error("Hay campos desconocidos")
-        ), 400
-
-    conn = conexion()
-    cursor = conn.cursor(dictionary=True)
-
-    # Verificar que el socio exista
-    cursor.execute(
-        "SELECT * FROM socios WHERE id = %s;",
-        (id,)
-    )
-    socio = cursor.fetchone()
-
-    if not socio:
-        cursor.close()
-        conn.close()
 
 # endpoint PATCH /socios/<id>
 def modificar_socio_route(id):
@@ -182,12 +150,12 @@ def modificar_socio_route(id):
         if "nombre" in datos:
             nombre = datos["nombre"]
 
-            if not isinstance(nombre, str) or not nombre.strip():
+            if not isinstance(nombre, str) or not nombre.strip() or not _nombre_valido(nombre.strip()):
                 cursor.close()
                 conn.close()
 
                 return jsonify({
-                    "Error": "El nombre no puede estar vacío"
+                    "Error": "El nombre no puede estar vacío o contiene caracteres inválidos"
                 }), 400
 
             nombre_final = nombre.strip()
@@ -196,12 +164,12 @@ def modificar_socio_route(id):
         if "email" in datos:
             email = datos["email"]
 
-            if not isinstance(email, str) or not email.strip():
+            if not isinstance(email, str) or not email.strip() or not _email_valido(email.strip()):
                 cursor.close()
                 conn.close()
 
                 return jsonify({
-                    "Error": "El email no puede estar vacío"
+                    "Error": "El email no puede estar vacío o tiene un formato inválido"
                 }), 400
 
             email_final = email.strip().lower()
@@ -253,4 +221,3 @@ def modificar_socio_route(id):
         return jsonify({
             "Error": f"No se pudo modificar el socio: {str(e)}"
         }), 500
-    
