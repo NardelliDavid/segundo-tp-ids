@@ -69,3 +69,40 @@ def crear_cancha_route():
     except Exception as e:
         return jsonify({"Error": f"No se pudo guardar la cancha: {str(e)}"}), 500
 
+# endpoint DELETE /canchas/<id> (Baja Lógica)
+def baja_cancha_route(id):
+# valido que el ID de la URL sea un número entero
+    try:
+        id_cancha = int(id)
+    except ValueError:
+        return jsonify({"Error": "El ID provisto debe ser un número entero"}), 400
+
+# abro la conexión a tu base de datos de XAMPP
+    try:
+        conn = conexion()
+        cursor = conn.cursor(dictionary=True)
+        
+# verifico que la cancha realmente existe en la base de datos antes de desactivarla
+        cursor.execute("SELECT id FROM canchas WHERE id = %s;", (id_cancha,))
+        existe = cursor.fetchone()
+        
+        if not existe:
+            cursor.close()
+            conn.close()
+            return jsonify({"Error": f"No se encontró ninguna cancha con el ID {id_cancha}"}), 404
+            
+#ejecuta baja logica: cambiamos activa a 0
+        query = "UPDATE canchas SET activa = 0 WHERE id = %s;"
+        cursor.execute(query, (id_cancha,))
+        
+        conn.commit() # Confirmamos el cambio real en el disco de XAMPP
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"Mensaje": f"Cancha con ID {id_cancha} dada de baja correctamente"}), 200
+
+    except Exception as e:
+        return jsonify({"Error": f"Error al procesar la baja de la cancha: {str(e)}"}), 500
+
+

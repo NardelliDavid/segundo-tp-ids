@@ -100,3 +100,13 @@ def modificar_socio(id):
 @app.route("/socios/<int:id>", methods=["DELETE"])
 def de_baja_socio(id):
     return baja_socio_route(id)
+
+@app.route("/canchas/<int:id>", methods=["DELETE"])
+def de_baja_cancha(id):
+    return baja_cancha_route(id)
+
+@app.route("/reservas/bloquear", methods=["POST"])
+def bloquear_cancha():
+    return bloquear_cancha_route()
+
+
