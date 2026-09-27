@@ -74,3 +74,33 @@ def bloquear_cancha_route():
 
     except Exception as e:
         return jsonify({"Error": f"No se pudo procesar el bloqueo: {str(e)}"}), 500
+# endpoint DELETE /bloqueos/<id>
+def eliminar_bloqueo_route(id):
+    if id <= 0:
+        return jsonify({"Error": "El id debe ser positivo"}), 400
+
+    conn = conexion()
+    cursor = conn.cursor()
+
+    try:
+        # Solo se puede borrar una fila que realmente sea un bloqueo.
+        cursor.execute(
+            "DELETE FROM reservas WHERE id = %s AND estado = 'bloqueada'",
+            (id,)
+        )
+
+        if cursor.rowcount == 0:
+            conn.rollback()
+            return jsonify({"Error": "Bloqueo no encontrado"}), 404
+
+        conn.commit()
+        return "", 204
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        cursor.close()
+        conn.close()
+
