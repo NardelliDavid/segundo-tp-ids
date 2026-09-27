@@ -1,15 +1,20 @@
-from flask import jsonify
-from ..repositories.database import conexion
+from flask import Blueprint, jsonify, request
+from src.validators import utils
+from src.services.deportes import mostrar_deportes
 
-# endpoint GET/deportes
-def deportes_routes():
-    conn = conexion()
-    cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM deportes;")
-    consulta = cursor.fetchall()
+deportes_bp=Blueprint('deportes', __name__)
 
-    cursor.close()
-    conn.close()
+@deportes_bp.route('/deportes', methods=['GET'])
+def get_deportes():
+    deportes = mostrar_deportes(request)
 
-    return jsonify(consulta), 200
+    if isinstance(deportes, dict) and 'errors' in deportes:
+        return jsonify(deportes), 400
+
+    if not deportes:
+        return '',204
+        
+    return jsonify({"deportes": deportes}), 200
+
+
