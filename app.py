@@ -113,4 +113,6 @@ def bloquear_cancha():
 def eliminar_bloqueo(id):
     return eliminar_bloqueo_route(id)
 
-
+@app.route("/reservas/recurrentes", methods=["POST"])
+def crear_reservas_recurrentes():
+    return reservas_recurrentes_route()
