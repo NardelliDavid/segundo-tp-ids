@@ -44,23 +44,21 @@ def socios_routes(limit, offset):
 
     return jsonify({"Socios":consulta, "_links": links}), 200
 
-# endpoint GET/socios/<id>
+# endpoint GET /socios/<id>
 def socios_id_routes(id):
-    try:
-        id = int(id)
-    except:
-        return jsonify({"Error":"el id no es un numero entero"}), 400
-
     conn = conexion()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(f"SELECT * FROM socios WHERE id = {id};")
-    consulta = cursor.fetchall()
+    cursor.execute("SELECT id, nombre, email, activo FROM socios WHERE id = %s AND activo = 1;", (id,))
+    socio = cursor.fetchone()
 
     cursor.close()
     conn.close()
 
-    return jsonify(consulta), 200
+    if not socio:
+        return jsonify({"Error": "Socio no encontrado"}), 404
+
+    return jsonify(socio), 200
 
 # endpoint POST /socios/
 def crear_socio_route():
