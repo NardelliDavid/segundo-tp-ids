@@ -1,20 +1,15 @@
-from flask import Blueprint, jsonify, request
-from src import utils
-from src.services.deportes import mostrar_deportes
+from flask import jsonify
+from ..repositories.database import conexion
 
+# endpoint GET/deportes
+def deportes_routes():
+    conn = conexion()
+    cursor = conn.cursor()
 
-deportes_bp=Blueprint('deportes', __name__)
+    cursor.execute("SELECT * FROM deportes;")
+    consulta = cursor.fetchall()
 
-@deportes_bp.route('/deportes', methods=['GET'])
-def get_deportes():
-    deportes = mostrar_deportes(request)
+    cursor.close()
+    conn.close()
 
-    if isinstance(deportes, dict) and 'errors' in deportes:
-        return jsonify(deportes), 400
-
-    if not deportes:
-        return '',204
-        
-    return jsonify({"deportes": deportes}), 200
-
-
+    return jsonify(consulta), 200

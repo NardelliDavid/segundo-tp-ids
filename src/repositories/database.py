@@ -4,7 +4,7 @@ def conexion():
     conexion = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="david",
+        password="",
         database="db_flask"
     )
     return conexion
