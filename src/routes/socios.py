@@ -64,44 +64,90 @@ def socios_id_routes(id):
 
 # endpoint POST /socios/
 def crear_socio_route():
-    
-    datos = request.get_json() #Obtener los datos enviados desde Postman en formato JSON 
-    
-    if not datos or "nombre" not in datos or "email" not in datos:
-        return jsonify({"Error": "Faltan datos obligatorios (nombre y email)"}), 400
-        
-    nombre = datos["nombre"]
-    email = datos["email"].strip().lower() # .lower() asegura que se guarde en minúsculas
+    datos = request.get_json(silent=True)
 
-    #Conectarse a la base de datos e insertar el nuevo socio
+    # Verificar que el cuerpo sea un objeto JSON
+    if datos is None or not isinstance(datos, dict):
+        return jsonify({
+            "Error": "El cuerpo de la solicitud es inválido"
+        }), 400
+
+    # Rechazar campos desconocidos
+    campos_permitidos = {"nombre", "email"}
+
+    if any(campo not in campos_permitidos for campo in datos):
+        return jsonify({
+            "Error": "Se enviaron campos no permitidos"
+        }), 400
+
+    # Verificar campos obligatorios
+    if "nombre" not in datos or "email" not in datos:
+        return jsonify({
+            "Error": "Los campos nombre y email son obligatorios"
+        }), 400
+
+    nombre = datos["nombre"]
+    email = datos["email"]
+
+    # El nombre no puede quedar vacío
+    if not isinstance(nombre, str) or not nombre.strip():
+        return jsonify({
+            "Error": "El nombre no puede estar vacío"
+        }), 400
+
+    nombre = nombre.strip()
+
+    # El email no puede quedar vacío
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({
+            "Error": "El email no puede estar vacío"
+        }), 400
+
+    email = email.strip().lower()
+
     try:
         conn = conexion()
-        cursor = conn.cursor()
-        
-        
-        query = "INSERT INTO socios (nombre, email, activo) VALUES (%s, %s, 1);"
-        cursor.execute(query, (nombre, email))
-        
-        conn.commit() # Confirma los cambios en MySQL
-        
-        #Obtiene el ID asignado automáticamente
+        cursor = conn.cursor(dictionary=True)
+
+        # Verificar si el email ya está registrado
+        cursor.execute(
+            "SELECT id FROM socios WHERE email = %s;",
+            (email,)
+        )
+
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+
+            return jsonify({
+                "Error": "El email ya está registrado"
+            }), 409
+
+        # Crear el socio
+        cursor.execute(
+            "INSERT INTO socios (nombre, email, activo) VALUES (%s, %s, %s);",
+            (nombre, email, 1)
+        )
+
+        conn.commit()
+
         nuevo_id = cursor.lastrowid
-        
+
         cursor.close()
         conn.close()
-        
+
         return jsonify({
-            "Mensaje": "Socio creado con éxito",
-            "Socio": {
-                "id": nuevo_id,
-                "nombre": nombre,
-                "email": email,
-                "activo": 1
-            }
+            "id": nuevo_id,
+            "nombre": nombre,
+            "email": email,
+            "activo": True
         }), 201
 
     except Exception as e:
-        return jsonify({"Error": f"No se pudo guardar el socio: {str(e)}"}), 500
+        return jsonify({
+            "Error": f"No se pudo guardar el socio: {str(e)}"
+        }), 500
+
 
 
 # endpoint PATCH /socios/<id>
