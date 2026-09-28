@@ -149,121 +149,107 @@ def crear_socio_route():
         }), 500
 
 
-
 # endpoint PATCH /socios/<id>
 def modificar_socio_route(id):
     datos = request.get_json(silent=True)
 
-    # El cuerpo no puede estar vacío
     if datos is None or datos == {}:
-        return jsonify({
-            "Error": "El cuerpo no puede estar vacío"
-        }), 400
+        return jsonify({"Error": "El cuerpo no puede estar vacío"}), 400
 
-    # Solo se permiten estos campos
+    # Campos que se pueden modificar
     campos_permitidos = {"nombre", "email", "activo"}
 
     if any(campo not in campos_permitidos for campo in datos):
-        return jsonify({
-            "Error": "Hay campos desconocidos"
-        }), 400
+        return jsonify({"Error": "Hay campos desconocidos"}), 400
 
-    try:
-        conn = conexion()
-        cursor = conn.cursor(dictionary=True)
+    conn = conexion()
+    cursor = conn.cursor(dictionary=True)
 
-        # Verificar que el socio exista
-        cursor.execute(
-            "SELECT * FROM socios WHERE id = %s;",
-            (id,)
-        )
-        socio = cursor.fetchone()
+    # Verificar que el socio exista
+    cursor.execute(
+        "SELECT * FROM socios WHERE id = %s;",
+        (id,)
+    )
+    socio = cursor.fetchone()
 
-        if not socio:
+    if not socio:
+        cursor.close()
+        conn.close()
+        return jsonify({"Error": "Socio no encontrado", "code": "SOCIO_NO_ENCONTRADO"}), 404
+
+    # Mantener el nombre actual si no se envió uno nuevo
+    nombre_final = socio["nombre"]
+
+    if "nombre" in datos:
+
+        if not isinstance(datos["nombre"], str) or not datos["nombre"].strip():
             cursor.close()
             conn.close()
+            return jsonify({"Error": "El nombre no puede estar vacío"}), 400
 
-            return jsonify({
-                "Error": "Socio no encontrado"
-            }), 404
+        nombre_final = datos["nombre"].strip()
 
-        # Mantener los valores actuales si no fueron enviados
-        nombre_final = socio["nombre"]
-        email_final = socio["email"]
-        activo_final = socio["activo"]
+    # Mantener el email actual si no se envió uno nuevo
+    email_final = socio["email"]
 
-        # Validar nombre
-        if "nombre" in datos:
-            nombre = datos["nombre"]
+    if "email" in datos:
+        email = (
+            datos["email"].strip().lower()
+            if isinstance(datos["email"], str)
+            else ""
+        )
 
-            if not isinstance(nombre, str) or not nombre.strip() or not _nombre_valido(nombre.strip()):
-                cursor.close()
-                conn.close()
 
-                return jsonify({
-                    "Error": "El nombre no puede estar vacío o contiene caracteres inválidos"
-                }), 400
+        if not email or "@" not in email:
+            cursor.close()
+            conn.close()
+            return jsonify({"Error": "El formato del email es inválido"}), 400
 
-            nombre_final = nombre.strip()
-
-        # Validar email
-        if "email" in datos:
-            email = datos["email"]
-
-            if not isinstance(email, str) or not email.strip() or not _email_valido(email.strip()):
-                cursor.close()
-                conn.close()
-
-                return jsonify({
-                    "Error": "El email no puede estar vacío o tiene un formato inválido"
-                }), 400
-
-            email_final = email.strip().lower()
-
-            # Verificar que el email no pertenezca a otro socio
+        # Verificar que el email no pertenezca a otro socio
+        if email != socio["email"]:
             cursor.execute(
-                "SELECT id FROM socios WHERE email = %s AND id != %s;",
-                (email_final, id)
+                "SELECT id FROM socios "
+                "WHERE email = %s AND id != %s;",
+                (email, id)
             )
 
             if cursor.fetchone():
                 cursor.close()
                 conn.close()
 
-                return jsonify({
-                    "Error": "El email ya está registrado"
-                }), 409
+                return jsonify({"Error": "El email ya está registrado", "code": "EMAIL_DUPLICADO"}), 409
 
-        # Validar activo
-        if "activo" in datos:
-            if not isinstance(datos["activo"], bool):
-                cursor.close()
-                conn.close()
+        email_final = email
 
-                return jsonify({
-                    "Error": "Activo debe ser true o false"
-                }), 400
+    # Mantener activo actual si no se envió uno nuevo
+    activo_final = socio["activo"]
 
-            activo_final = datos["activo"]
+    if "activo" in datos:
+        if not isinstance(datos["activo"], bool):
+            cursor.close()
+            conn.close()
+            return jsonify({"Error": "Activo debe ser true o false"}), 400
 
-        # Actualizar el socio
-        cursor.execute(
-            """
-            UPDATE socios
-            SET nombre = %s, email = %s, activo = %s
-            WHERE id = %s;
-            """,
-            (nombre_final, email_final, activo_final, id)
+        activo_final = 1 if datos["activo"] else 0
+
+    # Actualizar los datos
+    cursor.execute(
+        "UPDATE socios "
+        "SET nombre = %s, email = %s, activo = %s "
+        "WHERE id = %s;",
+        (
+            nombre_final,
+            email_final,
+            activo_final,
+            id
         )
+    )
 
-        conn.commit()
+    conn.commit()
 
-        cursor.close()
-        conn.close()
+    cursor.close()
+    conn.close()
 
-        return "", 204
 
-    except Exception as e:
-        return jsonify({
-            "Error": f"No se pudo modificar el socio: {str(e)}"
-        }), 500
+    return "", 204
+        
