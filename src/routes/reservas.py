@@ -4,6 +4,95 @@ from flask import jsonify, request
 from ..repositories.database import conexion
 from datetime import datetime, timedelta, timezone
 
+# endpoint PUT /reservas/<id>/estado
+def modificar_estado_reserva_route(id):
+    datos = request.get_json()
+
+    if not datos or "estado" not in datos:
+        return jsonify({"Error": "Debe indicar el estado"}), 400
+
+    nuevo_estado = datos["estado"]
+
+    if nuevo_estado not in ["confirmada", "cancelada", "finalizada"]:
+        return jsonify({"Error": "Estado desconocido"}), 400
+
+    try:
+        conn = conexion()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT * FROM reservas WHERE id = %s;",
+            (id,)
+        )
+
+        reserva = cursor.fetchone()
+
+        if not reserva:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "Error": "No existe una reserva con ese ID"
+            }), 404
+
+        estado_actual = reserva["estado"]
+
+        if nuevo_estado == estado_actual:
+            cursor.close()
+            conn.close()
+            return jsonify(reserva), 200
+
+        ahora = datetime.now()
+
+        # confirmada -> cancelada
+        if estado_actual == "confirmada" and nuevo_estado == "cancelada":
+            if ahora >= reserva["fecha_hora_inicio"]:
+                cursor.close()
+                conn.close()
+                return jsonify({
+                    "Error": "No se puede cancelar una reserva cuyo horario ya comenzó"
+                }), 409
+
+        # confirmada -> finalizada
+        elif estado_actual == "confirmada" and nuevo_estado == "finalizada":
+            if ahora < reserva["fecha_hora_fin"]:
+                cursor.close()
+                conn.close()
+                return jsonify({
+                    "Error": "La reserva todavía no finalizó"
+                }), 409
+
+        # cualquier otra transición
+        else:
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "Error": "La transición de estado no está permitida"
+            }), 409
+
+        cursor.execute(
+            "UPDATE reservas SET estado = %s WHERE id = %s;",
+            (nuevo_estado, id)
+        )
+
+        conn.commit()
+
+        cursor.execute(
+            "SELECT * FROM reservas WHERE id = %s;",
+            (id,)
+        )
+
+        reserva_actualizada = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(reserva_actualizada), 200
+
+    except Exception as e:
+        return jsonify({
+            "Error": f"No se pudo modificar el estado: {str(e)}"
+        }), 500
+
 # endpoint GET/reservas
 def reservas_routes():
     conn = conexion()

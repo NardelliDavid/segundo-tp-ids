@@ -93,6 +93,10 @@ def reservas():
 def reservas_id(id):
     return reservas_id_routes(id)
 
+@app.route("/reservas/<int:id>/estado", methods=["PUT"])
+def modificar_estado_reserva(id):
+    return modificar_estado_reserva_route(id)
+
 @app.route("/socios/<int:id>", methods=["PATCH"])
 def modificar_socio(id):
     return modificar_socio_route(id)
