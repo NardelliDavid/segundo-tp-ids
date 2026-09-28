@@ -79,7 +79,7 @@ def bloqueos_routes():
         bloqueo["fecha"] = bloqueo["fecha"].isoformat()
 
     # Contamos los bloqueos aplicando los mismos filtros
-    query_total = "SELECT COUNT(*) AS total FROM bloqueos WHERE 1=1"
+    query_total = "SELECT COUNT(*) AS total FROM reservas WHERE estado = 'bloqueada'"
     parametros_total = []
 
     if id_cancha is not None:
