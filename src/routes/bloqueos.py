@@ -55,7 +55,7 @@ def bloqueos_routes():
 
     # Filtro por fecha
     if fecha is not None:
-        query += " AND fecha = %s"
+        query += " AND DATE(fecha_hora_inicio) = %s"
         parametros.append(fecha)
 
     # Paginación
@@ -74,9 +74,8 @@ def bloqueos_routes():
 
     # Convertimos fecha y horarios para poder devolverlos como JSON
     for bloqueo in consulta:
-        bloqueo["hora_inicio"] = str(bloqueo["hora_inicio"])
-        bloqueo["hora_fin"] = str(bloqueo["hora_fin"])
-        bloqueo["fecha"] = bloqueo["fecha"].isoformat()
+        bloqueo["fecha_hora_inicio"] = bloqueo["fecha_hora_inicio"].isoformat()
+        bloqueo["fecha_hora_fin"] = bloqueo["fecha_hora_fin"].isoformat()
 
     # Contamos los bloqueos aplicando los mismos filtros
     query_total = "SELECT COUNT(*) AS total FROM reservas WHERE estado = 'bloqueada'"
@@ -87,7 +86,7 @@ def bloqueos_routes():
         parametros_total.append(id_cancha)
 
     if fecha is not None:
-        query_total += " AND fecha = %s"
+        query_total += " AND DATE(fecha_hora_inicio) = %s"
         parametros_total.append(fecha)
 
     cursor.execute(query_total, parametros_total)
