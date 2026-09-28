@@ -56,6 +56,23 @@ def canchas():
 def canchas_id(id):
     return canchas_id_routes(id)
 
+@app.route("/canchas/disponibles", methods=["GET"])
+def canchas_disponibles():
+    fecha = request.args.get("fecha")
+    hora_inicio = request.args.get("hora_inicio")
+    hora_fin = request.args.get("hora_fin")
+    id_deporte = request.args.get("id_deporte")
+    techada = request.args.get("techada")
+    return canchas_disponibles_routes(fecha, hora_inicio, hora_fin, id_deporte, techada)
+
+@app.route("/canchas/<int:id>", methods=["PATCH"])
+def patch_canchas(id):
+    nombre = request.args.get("nombre")
+    precio_hora = request.args.get("precio_hora")
+    techada = request.args.get("techada")
+    activa = request.args.get("activa")
+    return patch_canchas_route(id, nombre, precio_hora, techada, activa)
+
 @app.route("/canchas/", methods=["POST"])
 def crear_cancha():
     return crear_cancha_route()
