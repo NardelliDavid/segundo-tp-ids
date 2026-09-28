@@ -1,7 +1,7 @@
 from flask import jsonify,request
 from ..repositories.database import conexion
 from ..validators.socios import *
-from ..services.parametros import generar_links
+from ..services.parametros import *
 
 
 # endpoint GET/socios
@@ -37,7 +37,7 @@ def socios_routes(limit, offset):
     consulta = cursor.fetchall()
 
     # HATEOAS
-    links = generar_links(request.path, limit, offset, total_registros)
+    links = generar_links_socios(request.path, limit, offset, total_registros)
 
     cursor.close()
     conn.close()

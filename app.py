@@ -104,7 +104,18 @@ def socios_id(id):
 # ENDPOINTS DE RESERVAS
 @app.route("/reservas/", methods=["GET"])
 def reservas():
-    return reservas_routes()
+    id_cancha = request.args.get("id_cancha")
+    id_socio = request.args.get("id_socio")
+    estado = request.args.get("estado")
+    fecha_desde = request.args.get("fecha_desde")
+    fecha_hasta = request.args.get("fecha_hasta")
+
+    try:
+        limit = int(request.args.get("_limit", 10))
+        offset = int(request.args.get("_offset", 0))
+    except:
+        return jsonify({"Error":"limit u offset estan mal"}), 400
+    return reservas_routes(id_cancha,id_socio,estado,fecha_desde,fecha_hasta,limit,offset)
 
 @app.route("/reservas/<int:id>", methods=["GET"])
 def reservas_id(id):

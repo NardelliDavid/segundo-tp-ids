@@ -36,39 +36,39 @@ def canchas_id_routes(id):
 # endpoint GET/canchas/disponibles
 def canchas_disponibles_routes(fecha, hora_inicio, hora_fin, id_deporte, techada):
     if fecha == None or hora_fin == None or hora_inicio == None:
-        return {"Error":"Uno de los parametros obligatorios esta vacio"}, 400
+        return jsonify({"Error":"Uno de los parametros obligatorios esta vacio"}), 400
 
     # Verifica que id_deporte y techada sean correctos
     if id_deporte != None:
         try:
             id_deporte = int(id_deporte)
         except:
-            return {"Error":"id_deporte debe ser un entero"}, 400
+            return jsonify({"Error":"id_deporte debe ser un entero"}), 400
 
     if techada != None:
         try:
             techada = int(techada)
             if techada != 0 and techada !=1:
-                return {"Error":"techada debe ser 1 o 0"}, 400
+                return jsonify({"Error":"techada debe ser 1 o 0"}), 400
         except:
-            return {"Error":"techada debe ser 1 o 0"}, 400
+            return jsonify({"Error":"techada debe ser 1 o 0"}), 400
 
     if fecha.count("-") != 2:
-            return {"Error":"Ingrese una fecha valida"}, 400
+            return jsonify({"Error":"Ingrese una fecha valida"}), 400
     if hora_inicio.count(":") != 1 or hora_fin.count(":") != 1:
-        return {"Error":"Ingrese una hora valida"}, 400
+        return jsonify({"Error":"Ingrese una hora valida"}), 400
 
     # Verifica que los parametros contengan caracteres validos
     caracteres_validos = "1234567890-:"
     for caracter in fecha:
         if caracter not in caracteres_validos:
-            return {"Error":"Ingrese una fecha valida"}, 400
+            return jsonify({"Error":"Ingrese una fecha valida"}), 400
     for caracter in hora_inicio:
             if caracter not in caracteres_validos:
-                return {"Error":"Ingrese una hora inicial valida"}, 400
+                return jsonify({"Error":"Ingrese una hora inicial valida"}), 400
     for caracter in hora_fin:
             if caracter not in caracteres_validos:
-                return {"Error":"Ingrese una hora final valida"}, 400
+                return jsonify({"Error":"Ingrese una hora final valida"}), 400
 
     try: # Conversión a "YYYY-MM-DD HH:MM:SS"
         
@@ -80,16 +80,16 @@ def canchas_disponibles_routes(fecha, hora_inicio, hora_fin, id_deporte, techada
 
         # Verifica que las horas sean correctas
         if dt_inicio >= dt_fin:
-            return {"Error": "La hora de inicio debe ser anterior a la hora de finalizacion"}, 400
+            return jsonify({"Error": "La hora de inicio debe ser anterior a la hora de finalizacion"}), 400
         diferencia = dt_fin - dt_inicio
         if diferencia.total_seconds() / 3600 > 3:
-            return {"Error": "La diferencia entre horarios no puede ser mayor a 3 horas"}, 400
+            return jsonify({"Error": "La diferencia entre horarios no puede ser mayor a 3 horas"}), 400
 
         # Verifica que el horario sea correcto (entre las 8am y las 11pm)
         apertura = time(8, 0)
         cierre = time(23, 0)
         if not (apertura <= dt_inicio.time() <= cierre and apertura <= dt_fin.time() <= cierre):
-            return {"Error": "El horario debe estar entre las 08:00 y las 23:00"}, 400
+            return jsonify({"Error": "El horario debe estar entre las 08:00 y las 23:00"}), 400
 
         fecha_hora_inicio = dt_inicio.strftime("%Y-%m-%d %H:%M:%S")
         fecha_hora_fin = dt_fin.strftime("%Y-%m-%d %H:%M:%S")
@@ -126,9 +126,9 @@ def canchas_disponibles_routes(fecha, hora_inicio, hora_fin, id_deporte, techada
 
         # Devuelve el id de las canchas disponibles
         disponibles = sorted(todas - ocupadas)
-        return {"canchas_disponibles": disponibles}, 200
+        return jsonify({"canchas_disponibles": disponibles}), 200
     except Exception as a:
-        return {"Error":f"Ingrese fecha y horas validos {a}"}, 400
+        return jsonify({"Error":f"Ingrese fecha y horas validos {a}"}), 400
 
     
 # endpoint PATCH/canchas/

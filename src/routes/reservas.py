@@ -3,6 +3,7 @@ import re
 from flask import jsonify, request
 from ..repositories.database import conexion
 from datetime import datetime, timedelta, timezone
+from ..services.parametros import *
 
 # endpoint PUT /reservas/<id>/estado
 def modificar_estado_reserva_route(id):
@@ -94,20 +95,96 @@ def modificar_estado_reserva_route(id):
         }), 500
 
 # endpoint GET/reservas
-def reservas_routes():
+def reservas_routes(id_cancha,id_socio,estado,fecha_desde,fecha_hasta,limit,offset):
+    condiciones = []
+    params = []
+ 
+    # Validación de limit y offset
+    try:
+        limit = int(limit)
+        offset = int(offset)
+    except (ValueError, TypeError):
+        return jsonify({"error": "_limit y _offset deben ser enteros"}), 400
+    if limit < 1 or limit > 100:
+        return jsonify({"error": "_limit debe estar entre 1 y 100"}), 400
+    if offset < 0:
+        return jsonify({"error": "_offset debe ser mayor o igual a 0"}), 400
+ 
+    # Validaciones de los filtros opcionales
+    # Si el filtro es valido lo va agregando a condiciones y params
+    if id_cancha is not None:
+        try:
+            params.append(int(id_cancha))
+            condiciones.append("id_cancha = %s")
+        except (ValueError, TypeError):
+            return jsonify({"error": "id_cancha debe ser un entero"}), 400
+ 
+    if id_socio is not None:
+        try:
+            params.append(int(id_socio))
+            condiciones.append("id_socio = %s")
+        except (ValueError, TypeError):
+            return jsonify({"error": "id_socio debe ser un entero"}), 400
+ 
+    if estado is not None:
+        estado = estado.lower().strip()
+        if estado not in ("confirmada", "cancelada", "pendiente"):
+            return jsonify({"error": "estado debe ser confirmada, cancelada o pendiente"}), 400
+        condiciones.append("estado = %s")
+        params.append(estado)
+ 
+    if fecha_desde is not None:
+        try:
+            params.append(datetime.strptime(fecha_desde, "%Y-%m-%d %H:%M:%S"))
+            condiciones.append("fecha_hora_inicio >= %s")
+        except (ValueError, TypeError):
+            return jsonify({"error": "fecha_desde debe tener formato YYYY-MM-DD HH:MM:SS"}), 400
+ 
+    if fecha_hasta is not None:
+        try:
+            params.append(datetime.strptime(fecha_hasta, "%Y-%m-%d %H:%M:%S"))
+            condiciones.append("fecha_hora_fin <= %s")
+        except (ValueError, TypeError):
+            return jsonify({"error": "fecha_hasta debe tener formato YYYY-MM-DD HH:MM:SS"}), 400
+ 
+    where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
+ 
     conn = conexion()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM reservas;")
-    consulta = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return jsonify(consulta), 200
+    try:
+        cursor = conn.cursor()
+ 
+        # Total de registros que cumplen los filtros (para los links)
+        cursor.execute(f"SELECT COUNT(*) FROM reservas{where}", params)
+        total = cursor.fetchone()[0]
+ 
+        # Página pedida
+        cursor.execute(
+            f"SELECT * FROM reservas{where} ORDER BY id LIMIT %s OFFSET %s",
+            params + [limit, offset],
+        )
+        items = cursor.fetchall()
+        cursor.close()
+    finally:
+        conn.close()
+ 
+    # Se usan los valores originales de la request (strings), no los datetime parseados
+    filtros = {
+        "id_cancha": id_cancha,
+        "id_socio": id_socio,
+        "estado": estado,
+        "fecha_desde": fecha_desde,
+        "fecha_hasta": fecha_hasta,
+    }
+    links = generar_links_reservas(request.base_url, limit, offset, total, filtros)
+ 
+    return jsonify({"_items": items, "_links": links, "_total": total}), 200
 
 # endpoint GET/reservas/<id>
 def reservas_id_routes(id):
+    try:
+        id = int(id)
+    except:
+        return {"Error":"El id debe ser un numero entero"}, 400
     conn = conexion()
     cursor = conn.cursor()
 
